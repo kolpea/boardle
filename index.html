@@ -407,7 +407,7 @@ function hasCredentials() {
 // All requests go to localhost:3000/tmb which forwards to api.tmb.cat
 // and adds CORS headers. Run server.js with: node server.js
 
-const PROXY = 'http://localhost:3000/tmb';
+const PROXY = 'https://tmb-proxy.spamforjohnathan.workers.dev/';
 
 async function tmbFetch(apiPath, params) {
   const qs = new URLSearchParams({ path: apiPath, ...params }).toString();

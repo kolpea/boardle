@@ -234,7 +234,7 @@
 <script>
 const LINES = {
   L1: {
-    color:'#E3000F', textColor:'#fff', apiId: 1,
+    color:'#E3000F', textColor:'#fff',
     termini: ['Hospital de Bellvitge', 'Fondo'],
     directionIds: [2, 1],
     stations: [
@@ -255,7 +255,7 @@ const LINES = {
     ]
   },
   L2: {
-    color:'#7B2D8B', textColor:'#fff', apiId: 2,
+    color:'#7B2D8B', textColor:'#fff',
     termini: ['Badalona Pompeu Fabra', 'Paral·lel'],
     directionIds: [1, 2],
     stations: [
@@ -268,7 +268,7 @@ const LINES = {
     ]
   },
   L3: {
-    color:'#007F40', textColor:'#fff', apiId: 3,
+    color:'#007F40', textColor:'#fff',
     termini: ['Zona Universitària', 'Trinitat Nova'],
     directionIds: [2, 1],
     stations: [
@@ -283,7 +283,7 @@ const LINES = {
     ]
   },
   L4: {
-    color:'#FFC600', textColor:'#000', apiId: 4,
+    color:'#FFC600', textColor:'#000',
     termini: ['La Pau', 'Trinitat Nova'],
     directionIds: [2, 1],
     stations: [
@@ -299,7 +299,7 @@ const LINES = {
     ]
   },
   L5: {
-    color:'#0065B3', textColor:'#fff', apiId: 5,
+    color:'#0065B3', textColor:'#fff',
     termini: ['Cornellà Centre', "Vall d'Hebron"],
     directionIds: [2, 1],
     stations: [
@@ -315,7 +315,7 @@ const LINES = {
     ]
   },
   L11: {
-    color:'#8ECA3B', textColor:'#000', apiId: 11,
+    color:'#8ECA3B', textColor:'#000',
     termini: ['Trinitat Nova', 'Can Cuiàs'],
     directionIds: [1, 2],
     stations: [
@@ -414,42 +414,64 @@ async function tmbFetch(apiPath, params) {
   return resp.json();
 }
 
-// Cache: lineApiId -> Map<stationName, realCodi>
+// ─── Line ID cache: resolves "L1" -> real numeric CODI_LINIA from the API ────
+// The TMB API does NOT use 1/2/3... for L1/L2/L3 — it has its own internal IDs.
+const lineIdCache = {};
+
+async function getRealLineId(lineCode, appId, appKey) {
+  if (lineIdCache[lineCode] != null) return lineIdCache[lineCode];
+  console.log(`[TMB] Fetching all metro lines to resolve ${lineCode}...`);
+  const json = await tmbFetch('/v1/transit/linies/metro', { app_id: appId, app_key: appKey });
+  const stripped = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  (json.features || []).forEach(f => {
+    const p = f.properties || {};
+    // NOM_LINIA is e.g. "L1", "L2", "L11"; CODI_LINIA is the real numeric ID
+    if (p.NOM_LINIA && p.CODI_LINIA != null) {
+      lineIdCache[p.NOM_LINIA.trim()] = p.CODI_LINIA;
+    }
+  });
+  console.log('[TMB] Line ID map:', lineIdCache);
+  if (lineIdCache[lineCode] != null) return lineIdCache[lineCode];
+  // Fallback: match by stripping non-alphanumeric (handles "L 1" vs "L1" etc.)
+  for (const [k, v] of Object.entries(lineIdCache)) {
+    if (stripped(k) === stripped(lineCode)) return v;
+  }
+  throw new Error(`Line not found in API: ${lineCode}`);
+}
+
+// ─── Station ID cache: lineApiId -> Map<stationName, CODI_ESTACIO> ────────────
 const stationIdCache = {};
 
 async function getRealStationId(lineApiId, stationName, appId, appKey) {
   if (!stationIdCache[lineApiId]) {
-    console.log(`[TMB] Fetching station list for line ${lineApiId}...`);
+    console.log(`[TMB] Fetching station list for line API ID ${lineApiId}...`);
     const json = await tmbFetch(`/v1/transit/linies/metro/${lineApiId}/estacions`, { app_id: appId, app_key: appKey });
     const map = {};
     (json.features || []).forEach(f => {
       const p = f.properties || {};
-      if (p.NOM_ESTACIO && p.CODI_ESTACIO_LINIA != null) {
-        // Store both plain station code (for imetro) and line-specific code
-        map[p.NOM_ESTACIO.trim()] = p.CODI_ESTACIO != null ? p.CODI_ESTACIO : p.CODI_ESTACIO_LINIA;
+      const nom = (p.NOM_ESTACIO || '').trim();
+      if (nom) {
+        // CODI_ESTACIO is the plain station code used by the imetro endpoint
+        map[nom] = p.CODI_ESTACIO != null ? p.CODI_ESTACIO : p.CODI_ESTACIO_LINIA;
       }
     });
-    console.log(`[TMB] Station map for L${lineApiId}:`, map);
+    console.log(`[TMB] Station map for line ${lineApiId}:`, map);
     stationIdCache[lineApiId] = map;
   }
   const map = stationIdCache[lineApiId];
-  // Exact match
   if (map[stationName] != null) return map[stationName];
-  // Case-insensitive fallback
   const lower = stationName.toLowerCase();
   for (const [k, v] of Object.entries(map)) {
     if (k.toLowerCase() === lower) return v;
   }
-  // Partial match fallback (handles accents/apostrophes/hyphens differences)
-  const stripped = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['''\xb7\-\/]/g,'').replace(/\s+/g,' ').trim();
-  const needle = stripped(stationName);
+  const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['''\xb7\-\/]/g,'').replace(/\s+/g,' ').trim();
+  const needle = norm(stationName);
   for (const [k, v] of Object.entries(map)) {
-    if (stripped(k) === needle) return v;
+    if (norm(k) === needle) return v;
   }
-  // Substring fallback
   for (const [k, v] of Object.entries(map)) {
-    const sk = stripped(k);
-    if (sk.includes(needle) || needle.includes(sk)) return v;
+    const nk = norm(k);
+    if (nk.includes(needle) || needle.includes(nk)) return v;
   }
   console.warn(`[TMB] Station not found: "${stationName}" in`, Object.keys(map));
   return null;
@@ -462,30 +484,25 @@ async function fetchDepartures() {
   if (!appId || !appKey) { departureTimes = [null, null]; updateBoard(); return; }
 
   const lineData = LINES[state.line];
-  const lineApiId = lineData.apiId;
   const dirCode = lineData.directionIds[state.directionIdx];
 
   setStatus('loading', 'Fetching live data…');
 
   try {
-    // Step 1: resolve the real station ID from the TMB station list
-    const realId = await getRealStationId(lineApiId, state.station, appId, appKey);
-    if (!realId) {
+    // Step 1: resolve the real numeric line ID from the TMB API
+    const lineApiId = await getRealLineId(state.line, appId, appKey);
+    console.log(`[TMB] Resolved ${state.line} -> API line ID ${lineApiId}`);
+
+    // Step 2: resolve the real station code
+    const stationApiId = await getRealStationId(lineApiId, state.station, appId, appKey);
+    if (!stationApiId) {
       setStatus('error', `Station not found: ${state.station}`);
       departureTimes = [null, null]; updateBoard(); return;
     }
+    console.log(`[TMB] Resolved "${state.station}" -> station ID ${stationApiId}`);
 
-    // Step 2: fetch real-time arrivals via imetro endpoint
-    console.log(`[TMB] Fetching imetro for station ${realId}, line ${lineApiId}, dir ${dirCode}`);
-    let json;
-    try {
-      json = await tmbFetch(`/v1/imetro/estacions/${realId}`, { app_id: appId, app_key: appKey });
-    } catch(e1) {
-      // Some station IDs may need zero-padding; retry with padded variant
-      const altId = String(realId).padStart(3, '0');
-      console.log(`[TMB] Retrying with padded id ${altId}`);
-      json = await tmbFetch(`/v1/imetro/estacions/${altId}`, { app_id: appId, app_key: appKey });
-    }
+    // Step 3: fetch real-time arrivals from imetro endpoint
+    const json = await tmbFetch(`/v1/imetro/estacions/${stationApiId}`, { app_id: appId, app_key: appKey });
     console.log('[TMB] Raw imetro response:', JSON.stringify(json).slice(0, 500));
 
     parseDepartures(json, lineApiId, dirCode);

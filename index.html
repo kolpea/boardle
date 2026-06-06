@@ -399,15 +399,18 @@ function hasCredentials() {
 }
 
 // ─── TMB PROXY (via local server.js) ─────────────────────────────────────────
-// All requests go to localhost:3000/tmb which forwards to api.tmb.cat
-// and adds CORS headers. Run server.js with: node server.js
+// Requests go to localhost:3000/tmb which forwards to api.tmb.cat.
+// Run server.js first: node server.js
 
-const PROXY = 'https://tmb-proxy.spamforjohnathan.workers.dev/';
+const PROXY = 'http://localhost:3000/tmb';
 
 async function tmbFetch(apiPath, params) {
   const qs = new URLSearchParams({ path: apiPath, ...params }).toString();
   const resp = await fetch(`${PROXY}?${qs}`);
-  if (!resp.ok) throw new Error(`TMB ${resp.status} on ${apiPath}`);
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`TMB ${resp.status} on ${apiPath}${body ? ': ' + body.slice(0, 120) : ''}`);
+  }
   return resp.json();
 }
 
@@ -489,7 +492,14 @@ async function fetchDepartures() {
 
   } catch (e) {
     console.error('[TMB] fetchDepartures error:', e);
-    setStatus('error', e.message || 'Network error');
+    const msg = e.message || '';
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('ERR_CONNECTION_REFUSED')) {
+      setStatus('error', 'server.js not running — run: node server.js');
+    } else if (msg.includes('401')) {
+      setStatus('error', 'Invalid API credentials (401)');
+    } else {
+      setStatus('error', msg || 'Network error');
+    }
     departureTimes = [null, null]; updateBoard();
   }
 }

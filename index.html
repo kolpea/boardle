@@ -10,17 +10,11 @@
     --bg: #0e0e0e; --surface: #161616; --surface2: #1f1f1f;
     --border: #2a2a2a; --text: #e8e8e8; --text-dim: #888; --accent: #fff;
   }
-  body { background:var(--bg); color:var(--text); font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  body { background:var(--bg); color:var(--text); font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; height:100vh; overflow:hidden; display:flex; flex-direction:column; }
 
-  header { padding:24px 40px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; }
-  .header-logo { width:48px; height:48px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-  .header-logo svg { width:48px; height:48px; }
-  .header-title h1 { font-size:17px; font-weight:600; letter-spacing:-0.02em; color:var(--accent); line-height:1; }
-  .header-title p { font-size:11px; color:var(--text-dim); margin-top:3px; letter-spacing:0.08em; text-transform:uppercase; }
+  main { flex:1; display:grid; grid-template-columns:300px 1fr; height:100vh; }
 
-  main { flex:1; display:grid; grid-template-columns:300px 1fr; }
-
-  .controls-panel { border-right:1px solid var(--border); padding:28px 24px; display:flex; flex-direction:column; gap:20px; overflow-y:auto; }
+  .controls-panel { border-right:1px solid var(--border); padding:28px 24px; display:flex; flex-direction:column; gap:20px; overflow-y:auto; height:100vh; }
   .control-group > label { display:block; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; font-weight:500; }
   .select-wrapper { position:relative; }
   .select-wrapper::after { content:''; position:absolute; right:13px; top:50%; transform:translateY(-50%); border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid var(--text-dim); pointer-events:none; }
@@ -57,7 +51,7 @@
   .status-dot.error { background:#ef4444; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
 
-  .preview-panel { padding:28px 32px; display:flex; flex-direction:column; gap:20px; }
+  .preview-panel { padding:28px 32px; display:flex; flex-direction:column; gap:20px; overflow:hidden; height:100vh; }
   .preview-label { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); font-weight:500; }
   .screen-preview-wrapper { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:28px; display:flex; align-items:center; justify-content:center; min-height:200px; }
   .screen-placeholder { text-align:center; color:var(--text-dim); }
@@ -115,19 +109,6 @@
 </head>
 <body>
 
-<header>
-  <div class="header-logo">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="4" y="3" width="16" height="18" rx="3" stroke="white" stroke-width="1.5"/>
-      <rect x="7" y="6" width="10" height="7" rx="1.5" stroke="white" stroke-width="1.5"/>
-      <path d="M8 21L10.5 18M16 21L13.5 18" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>  </div>
-  <div class="header-title">
-    <h1>Departure Board Design</h1>
-    <p>Barcelona Metro · Unofficial</p>
-  </div>
-</header>
-
 <main>
   <aside class="controls-panel">
 
@@ -155,6 +136,7 @@
           <option value="L3">L3</option>
           <option value="L4">L4</option>
           <option value="L5">L5</option>
+          <option value="L11">L11</option>
         </select>
       </div>
     </div>
@@ -241,6 +223,7 @@
       </svg>
       Display in full screen
     </button>
+    <p style="font-size:10px;color:var(--text-dim);margin-top:auto;letter-spacing:0.04em;">Departure boards as seen on TMB Metro. Powered by TMB API.</p>
   </section>
 </main>
 
@@ -330,6 +313,17 @@ const LINES = {
       {name:'Horta', id:122},{name:'El Carmel', id:123},{name:'El Coll / La Teixonera', id:124},
       {name:'Montbau', id:125},{name:"Vall d'Hebron", id:126}
     ]
+  },
+  L11: {
+    color:'#8ECA3B', textColor:'#000', apiId: 11,
+    termini: ['Trinitat Nova', 'Can Cuiàs'],
+    directionIds: [1, 2],
+    stations: [
+      {name:'Trinitat Nova', id:200},{name:'Casa Bloc', id:201},{name:'Torrent de la Sínia', id:202},
+      {name:'Porta', id:203},{name:'Les Roquetes', id:204},{name:'Verdun', id:205},
+      {name:'Trinitat Nova', id:206},{name:'Torre Baró / Vallbona', id:207},
+      {name:'Can Cuiàs', id:208}
+    ]
   }
 };
 
@@ -376,7 +370,8 @@ const LINE_SVGS = {
   L2:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64.024 64" width="100" height="100"><rect fill="#993C8C" width="64.024" height="64"/><polygon fill="#FFF" points="14.757,15.256 14.757,42.64 31.135,42.64 31.135,48.855 7.369,48.855 7.369,15.256"/><path fill="#FFF" d="M34.422,23.326c0.507-1.612,1.25-3.021,2.263-4.237c0.999-1.206,2.268-2.152,3.783-2.823c1.525-0.68,3.272-1.009,5.25-1.009c1.501,0,2.939,0.232,4.3,0.705c1.361,0.473,2.572,1.153,3.6,2.031c1.042,0.878,1.858,1.94,2.471,3.238c0.618,1.293,0.922,2.731,0.922,4.333c0,1.645-0.261,3.084-0.801,4.28c-0.526,1.187-1.24,2.249-2.118,3.175c-0.878,0.931-1.868,1.766-2.987,2.509c-1.119,0.758-2.239,1.505-3.368,2.229c-1.129,0.748-2.229,1.539-3.281,2.384c-1.076,0.844-2.022,1.843-2.833,2.972h15.577v5.733h-24.18c0-1.92,0.26-3.58,0.82-4.985c0.55-1.419,1.289-2.678,2.229-3.788c0.946-1.119,2.041-2.138,3.325-3.083c1.264-0.946,2.601-1.901,4.02-2.876c0.724-0.492,1.491-0.999,2.306-1.515c0.811-0.526,1.559-1.095,2.239-1.723c0.666-0.627,1.226-1.341,1.689-2.128c0.449-0.782,0.68-1.67,0.68-2.669c0-1.612-0.463-2.852-1.385-3.745C48.011,21.439,46.823,21,45.386,21c-0.965,0-1.8,0.232-2.466,0.68c-0.671,0.449-1.221,1.042-1.626,1.79c-0.405,0.733-0.704,1.544-0.869,2.437c-0.174,0.898-0.261,1.776-0.261,2.664h-6.403C33.708,26.694,33.93,24.928,34.422,23.326"/></svg>`,
   L3:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 63.99 64" width="100" height="100"><rect fill="#3AA83E" width="63.99" height="64"/><polygon fill="#FFF" points="15.593,15.26 15.593,42.634 31.964,42.634 31.964,48.847 8.208,48.847 8.208,15.26"/><path fill="#FFF" d="M45.884,29.232c0.81-0.067,1.582-0.241,2.281-0.55c0.704-0.294,1.274-0.724,1.736-1.283c0.449-0.569,0.69-1.327,0.69-2.258c0-1.408-0.473-2.494-1.418-3.251c-0.94-0.757-2.016-1.129-3.246-1.129c-1.688,0-2.971,0.56-3.83,1.669c-0.864,1.119-1.283,2.523-1.249,4.211h-6.343c0.058-1.688,0.362-3.236,0.911-4.63c0.56-1.394,1.317-2.6,2.306-3.599c0.998-1.008,2.171-1.775,3.555-2.325c1.38-0.55,2.918-0.825,4.607-0.825c1.317,0,2.634,0.198,3.95,0.584c1.317,0.395,2.499,0.989,3.555,1.765c1.042,0.791,1.896,1.746,2.557,2.866c0.67,1.128,0.998,2.436,0.998,3.917c0,1.592-0.395,3.005-1.163,4.226c-0.772,1.225-1.92,2.05-3.458,2.489v0.097c1.823,0.41,3.251,1.288,4.293,2.634c1.018,1.351,1.544,2.966,1.544,4.843c0,1.732-0.338,3.266-1.018,4.606c-0.661,1.351-1.568,2.48-2.701,3.391c-1.119,0.912-2.422,1.602-3.893,2.06c-1.481,0.473-3.02,0.714-4.621,0.714c-1.843,0-3.531-0.275-5.046-0.801c-1.539-0.526-2.822-1.307-3.888-2.325c-1.061-1.022-1.886-2.262-2.465-3.743c-0.594-1.466-0.859-3.159-0.825-5.079h6.353c0.034,0.878,0.164,1.722,0.42,2.513c0.241,0.801,0.613,1.491,1.076,2.074c0.468,0.579,1.061,1.042,1.765,1.384c0.714,0.347,1.544,0.526,2.523,0.526c1.505,0,2.764-0.463,3.806-1.394c1.032-0.921,1.548-2.185,1.548-3.786c0-1.249-0.241-2.205-0.723-2.865c-0.497-0.656-1.11-1.138-1.867-1.438c-0.748-0.294-1.568-0.468-2.47-0.511c-0.887-0.048-1.741-0.077-2.556-0.077v-4.699C44.292,29.3,45.073,29.3,45.884,29.232"/></svg>`,
   L4:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64.024 64" width="100" height="100"><rect fill="#FCBE00" width="64.024" height="64"/><polygon fill="#1D1D1B" points="15.606,15.251 15.606,42.636 31.983,42.636 31.983,48.851 8.218,48.851 8.218,15.251"/><path fill="#1D1D1B" d="M33.623,41.224v-6.123l14.312-19.201h5.974v19.823h4.377v5.501h-4.377v7.615h-6.345v-7.615H33.623z M47.409,24.287l-8.507,11.436h8.662V24.287H47.409z"/></svg>`,
-  L5:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 63.99 64" width="100" height="100"><rect fill="#0177BC" width="63.99" height="64"/><polygon fill="#FFF" points="15.585,15.252 15.585,42.626 31.956,42.626 31.956,48.839 8.209,48.839 8.209,15.252"/><path fill="#FFF" d="M42.78,21.413l-1.317,7.482l0.096,0.092c0.912-0.911,1.877-1.558,2.909-1.944c1.032-0.396,2.219-0.603,3.536-0.603c1.621,0,3.073,0.309,4.322,0.897c1.249,0.603,2.316,1.394,3.184,2.407c0.854,1.008,1.51,2.18,1.973,3.555c0.449,1.36,0.68,2.807,0.68,4.341c0,1.693-0.338,3.271-0.989,4.732c-0.666,1.457-1.544,2.721-2.663,3.782c-1.109,1.066-2.407,1.891-3.873,2.47c-1.481,0.584-3.053,0.859-4.708,0.825c-1.592,0-3.126-0.207-4.587-0.637c-1.461-0.43-2.754-1.076-3.873-1.954c-1.143-0.878-2.041-1.963-2.711-3.27c-0.68-1.293-1.032-2.808-1.061-4.544h6.681c0.164,1.515,0.724,2.711,1.698,3.613c0.97,0.887,2.209,1.336,3.71,1.336c0.878,0,1.678-0.174,2.373-0.545c0.723-0.352,1.302-0.825,1.785-1.409c0.497-0.579,0.868-1.249,1.143-2.026c0.26-0.772,0.395-1.558,0.395-2.373c0-0.844-0.135-1.645-0.376-2.392c-0.26-0.757-0.632-1.413-1.138-1.983c-0.507-0.56-1.085-0.999-1.78-1.317c-0.68-0.309-1.491-0.473-2.402-0.473c-1.196,0-2.161,0.217-2.909,0.646c-0.757,0.42-1.457,1.085-2.127,1.997h-6.01l3.246-18.204h18.388v5.499H42.78z"/></svg>`
+  L5:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 63.99 64" width="100" height="100"><rect fill="#0177BC" width="63.99" height="64"/><polygon fill="#FFF" points="15.585,15.252 15.585,42.626 31.956,42.626 31.956,48.839 8.209,48.839 8.209,15.252"/><path fill="#FFF" d="M42.78,21.413l-1.317,7.482l0.096,0.092c0.912-0.911,1.877-1.558,2.909-1.944c1.032-0.396,2.219-0.603,3.536-0.603c1.621,0,3.073,0.309,4.322,0.897c1.249,0.603,2.316,1.394,3.184,2.407c0.854,1.008,1.51,2.18,1.973,3.555c0.449,1.36,0.68,2.807,0.68,4.341c0,1.693-0.338,3.271-0.989,4.732c-0.666,1.457-1.544,2.721-2.663,3.782c-1.109,1.066-2.407,1.891-3.873,2.47c-1.481,0.584-3.053,0.859-4.708,0.825c-1.592,0-3.126-0.207-4.587-0.637c-1.461-0.43-2.754-1.076-3.873-1.954c-1.143-0.878-2.041-1.963-2.711-3.27c-0.68-1.293-1.032-2.808-1.061-4.544h6.681c0.164,1.515,0.724,2.711,1.698,3.613c0.97,0.887,2.209,1.336,3.71,1.336c0.878,0,1.678-0.174,2.373-0.545c0.723-0.352,1.302-0.825,1.785-1.409c0.497-0.579,0.868-1.249,1.143-2.026c0.26-0.772,0.395-1.558,0.395-2.373c0-0.844-0.135-1.645-0.376-2.392c-0.26-0.757-0.632-1.413-1.138-1.983c-0.507-0.56-1.085-0.999-1.78-1.317c-0.68-0.309-1.491-0.473-2.402-0.473c-1.196,0-2.161,0.217-2.909,0.646c-0.757,0.42-1.457,1.085-2.127,1.997h-6.01l3.246-18.204h18.388v5.499H42.78z"/></svg>`,
+  L11:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100" height="100"><rect fill="#8ECA3B" width="64" height="64"/><polygon fill="#000" points="7,15.25 7,42.63 23.37,42.63 23.37,48.85 -0.39,48.85 -0.39,15.25"/><path fill="#000" d="M30.47,48.844V27.491h-8.283V22.45c1.163,0.034,2.282-0.053,3.367-0.261c1.076-0.198,2.05-0.55,2.919-1.076c0.854-0.516,1.592-1.206,2.185-2.05c0.589-0.849,0.984-1.901,1.182-3.15h5.312v32.931H30.47z"/><path fill="#000" d="M48.47,48.844V27.491h-8.283V22.45c1.163,0.034,2.282-0.053,3.367-0.261c1.076-0.198,2.05-0.55,2.919-1.076c0.854-0.516,1.592-1.206,2.185-2.05c0.589-0.849,0.984-1.901,1.182-3.15h5.312v32.931H48.47z"/></svg>`
 };
 
 function getCurrentTime() {
@@ -427,7 +422,8 @@ async function getRealStationId(lineApiId, stationName, appId, appKey) {
     (json.features || []).forEach(f => {
       const p = f.properties || {};
       if (p.NOM_ESTACIO && p.CODI_ESTACIO_LINIA != null) {
-        map[p.NOM_ESTACIO.trim()] = p.CODI_ESTACIO_LINIA;
+        // Store both plain station code (for imetro) and line-specific code
+        map[p.NOM_ESTACIO.trim()] = p.CODI_ESTACIO != null ? p.CODI_ESTACIO : p.CODI_ESTACIO_LINIA;
       }
     });
     console.log(`[TMB] Station map for L${lineApiId}:`, map);
@@ -441,11 +437,16 @@ async function getRealStationId(lineApiId, stationName, appId, appKey) {
   for (const [k, v] of Object.entries(map)) {
     if (k.toLowerCase() === lower) return v;
   }
-  // Partial match fallback (handles accents/apostrophes differences)
-  const stripped = s => s.toLowerCase().replace(/['’··]/g, '').replace(/\s+/g, ' ').trim();
+  // Partial match fallback (handles accents/apostrophes/hyphens differences)
+  const stripped = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/['''\xb7\-\/]/g,'').replace(/\s+/g,' ').trim();
   const needle = stripped(stationName);
   for (const [k, v] of Object.entries(map)) {
     if (stripped(k) === needle) return v;
+  }
+  // Substring fallback
+  for (const [k, v] of Object.entries(map)) {
+    const sk = stripped(k);
+    if (sk.includes(needle) || needle.includes(sk)) return v;
   }
   console.warn(`[TMB] Station not found: "${stationName}" in`, Object.keys(map));
   return null;
@@ -471,9 +472,17 @@ async function fetchDepartures() {
       departureTimes = [null, null]; updateBoard(); return;
     }
 
-    // Step 2: fetch real-time arrivals for that station
+    // Step 2: fetch real-time arrivals via imetro endpoint
     console.log(`[TMB] Fetching imetro for station ${realId}, line ${lineApiId}, dir ${dirCode}`);
-    const json = await tmbFetch(`/v1/imetro/estacions/${realId}`, { app_id: appId, app_key: appKey });
+    let json;
+    try {
+      json = await tmbFetch(`/v1/imetro/estacions/${realId}`, { app_id: appId, app_key: appKey });
+    } catch(e1) {
+      // Some station IDs may need zero-padding; retry with padded variant
+      const altId = String(realId).padStart(3, '0');
+      console.log(`[TMB] Retrying with padded id ${altId}`);
+      json = await tmbFetch(`/v1/imetro/estacions/${altId}`, { app_id: appId, app_key: appKey });
+    }
     console.log('[TMB] Raw imetro response:', JSON.stringify(json).slice(0, 500));
 
     parseDepartures(json, lineApiId, dirCode);
@@ -484,7 +493,6 @@ async function fetchDepartures() {
     departureTimes = [null, null]; updateBoard();
   }
 }
-
 function parseDepartures(json, lineApiId, dirCode) {
   // The imetro endpoint returns a GeoJSON FeatureCollection.
   // Each feature.properties contains:
